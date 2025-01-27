@@ -19,6 +19,7 @@ from llmcompressor.utils.pytorch.module import (
     get_matching_layer,
     match_targets,
 )
+from llmcompressor.utils.timer import log_time
 
 MINIMUM_SMOOTHING_SCALE = 1e-5
 
@@ -107,6 +108,7 @@ class SmoothQuantModifier(Modifier):
     resolved_mappings_: Optional[List] = None
     scales_: Optional[Dict] = None
 
+    @log_time
     def on_initialize(self, state: State, **kwargs) -> bool:
         """
         Initialize and run SmoothQuant on the given state
@@ -138,6 +140,7 @@ class SmoothQuantModifier(Modifier):
 
         return True
 
+    @log_time
     def on_finalize(self, state: State, **kwargs) -> bool:
         """
         Clean up by clearing the scale and mapping data
@@ -152,6 +155,7 @@ class SmoothQuantModifier(Modifier):
 
         return True
 
+    @log_time
     def _infer_mappings_from_model(
         self,
         model: Module,
@@ -164,6 +168,7 @@ class SmoothQuantModifier(Modifier):
             architecture=model.__class__.__name__
         )
 
+    @log_time
     @handle_mapping_resolution_errors
     def _resolve_mappings(self, model: Module) -> List:
         """
@@ -197,6 +202,7 @@ class SmoothQuantModifier(Modifier):
                     resolved_mappings.append(mapping)
         return resolved_mappings
 
+    @log_time
     def _setup_scale_hooks(self):
         """
         Attach a forward hook to each activation we want to smooth. This allows us to
@@ -233,6 +239,7 @@ class SmoothQuantModifier(Modifier):
             layer = mapping.smooth_layer
             self.register_hook(layer, create_hook_fn(name), "forward")
 
+    @log_time
     @torch.no_grad()
     def _calibrate(self, model: Module, calibration_dataloader: List):
         """
@@ -260,6 +267,7 @@ class SmoothQuantModifier(Modifier):
         # remove the hooks now that we are done calibrating
         self.remove_hooks()
 
+    @log_time
     @torch.no_grad()
     def _apply_smoothing(self, model: Module):
         """
@@ -316,6 +324,7 @@ class SmoothQuantModifier(Modifier):
         # clear out allocated smoothing scales
         torch.cuda.empty_cache()
 
+    @log_time
     def _calculate_smoothing_scales(
         self, balance_layers: List[Module], activation_scales: torch.Tensor
     ) -> List[float]:

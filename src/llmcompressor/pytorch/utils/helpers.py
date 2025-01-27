@@ -46,6 +46,7 @@ except Exception as _err:
     gpt_conv1d_err = _err
     GPTConv1D = None
 
+from llmcompressor.utils.timer import log_time
 
 __all__ = [
     "default_device",
@@ -354,6 +355,7 @@ def tensors_to_precision(
     )
 
 
+@log_time
 def tensors_module_forward(
     tensors: Union[Tensor, Iterable[Tensor], Mapping[Any, Tensor]],
     module: Module,
